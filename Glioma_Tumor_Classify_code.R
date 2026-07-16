@@ -48,6 +48,8 @@ rownames(factors_gbmlgg_tcga)=factors_gbmlgg_tcga[,1]
 write.csv(factors_gbmlgg_tcga[c(1,3:4,8,10:12,23:24,15:16)],"Pub_Classify/TCGA_Glioma_Clinical_Info.csv",row.names = F)
 factors_gbmlgg_tcga[,c(11,15:22)]=sapply(factors_gbmlgg_tcga[,c(11,15:22)],as.numeric)
 
+tcga_methylation=read.csv("TCGA_Methylation.csv")
+
 factors_gbmlgg_cgga=read.csv("CGGA_GBMLGG-Clinical.csv")
 rownames(factors_gbmlgg_cgga)=factors_gbmlgg_cgga[,1]
 write.csv(factors_gbmlgg_cgga[c(1:2,4,7:9,12:13,10:11)],"Pub_Classify/CGGA_Glioma_Clinical_Info.csv",row.names = F)
@@ -369,6 +371,10 @@ figs2e=ggplot(temp, aes(x=Dataset, y=Brier_Score, fill=Dataset))+geom_bar(stat =
 
 temp=data.frame(Dataset=c("TCGA","CGGA","GLASS"),F1=c(confusionMatrix(data=factor(sapply(factors_gbmlgg_tcga[factors_gbmlgg_tcga$Chromosome_1p_19q_Codeletion!="N/A",]$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis, switch,"Astrocytoma_G2"=0,"Astrocytoma_G3"=0,"Astrocytoma_G4"=0,"Glioblastoma_G4"=0,"Oligodendroglioma_G2"=1,"Oligodendroglioma_G3"=1),levels = c(0,1)),reference=factor(sapply(factors_gbmlgg_tcga[factors_gbmlgg_tcga$Chromosome_1p_19q_Codeletion!="N/A",]$Chromosome_1p_19q_Codeletion, switch,"Codeleted"=1,"Non_Codeleted"=0),levels = c(0,1)))$byClass[7], confusionMatrix(data=factor(sapply(factors_gbmlgg_cgga[factors_gbmlgg_cgga$Chromosome_1p_19q_Codeletion!="N/A",]$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis, switch,"Astrocytoma_G2"=0,"Astrocytoma_G3"=0,"Astrocytoma_G4"=0,"Glioblastoma_G4"=0,"Oligodendroglioma_G2"=1,"Oligodendroglioma_G3"=1),levels = c(0,1)),reference=factor(sapply(factors_gbmlgg_cgga[factors_gbmlgg_cgga$Chromosome_1p_19q_Codeletion!="N/A",]$Chromosome_1p_19q_Codeletion, switch,"Codeleted"=1,"Non_Codeleted"=0),levels = c(0,1)))$byClass[7], confusionMatrix(data=factor(sapply(factors_gbmlgg_glass[factors_gbmlgg_glass$Chromosome_1p_19q_Codeletion!="N/A",]$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis, switch,"Astrocytoma_G2"=0,"Astrocytoma_G3"=0,"Astrocytoma_G4"=0,"Glioblastoma_G4"=0,"Oligodendroglioma_G2"=1,"Oligodendroglioma_G3"=1),levels = c(0,1)),reference=factor(sapply(factors_gbmlgg_glass[factors_gbmlgg_glass$Chromosome_1p_19q_Codeletion!="N/A",]$Chromosome_1p_19q_Codeletion, switch,"Codeleted"=1,"Non_Codeleted"=0),levels = c(0,1)))$byClass[7]))
 figs2f=ggplot(temp, aes(x=Dataset, y=F1, fill=Dataset))+geom_bar(stat = "identity")+theme_classic()+scale_fill_manual(values=c(`TCGA`="darkred", `CGGA`="darkgreen", `GLASS`="darkblue"))+xlab("Dataset")+ylab("F1\n(Chromosome 1p/19q-codeletion)")+ labs(fill = "Dataset")+theme(text = element_text(size = 6),legend.key.height = unit(0.5, "lines"),legend.key.width = unit(0.5, "lines"),legend.position = "top",legend.justification = "center",legend.direction = "horizontal")+ scale_y_continuous(breaks=seq(0,1,by=0.1))
+
+
+temp=merge(factors_gbmlgg_tcga,tcga_methylation,by="TCGA_ID",all.x=T)
+figs2g=ggplot(subset(data.frame(table(temp$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis, temp$WHO_CNS5_Diagnosis_Methylation)), Var2 != "N/A"), aes(Var2, Var1, fill = Freq)) + geom_tile(color = "white") + labs(x = "Methylation Diagnosis (Zakharova et al.)", y = "Predicted Diagnosis (Elastic Net)") + scale_fill_gradient(low = "white", high = "dodgerblue4", name = "Count") + scale_x_discrete(labels = c("Astrocytoma_G2" = "A (G2)", "Astrocytoma_G3" = "A (G3)", "Astrocytoma_G4" = "A (G4)", "Glioblastoma_G4" = "GBM (G4)", "Oligodendroglioma_G2" = "O (G2)", "Oligodendroglioma_G3" = "O (G3)")) + scale_y_discrete(labels = c("Astrocytoma_G2" = "A (G2)", "Astrocytoma_G3" = "A (G3)", "Astrocytoma_G4" = "A (G4)", "Glioblastoma_G4" = "GBM (G4)", "Oligodendroglioma_G2" = "O (G2)", "Oligodendroglioma_G3" = "O (G3)")) + theme_minimal() + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + coord_fixed() + geom_text(aes(label = Freq), color = "black", size = 2) + theme(panel.grid.major = element_blank(), panel.border = element_blank(), panel.background = element_blank(), axis.ticks = element_blank(), legend.position = "right", legend.justification = "center", legend.key.width = unit(0.4, "lines"), legend.key.height = unit(0.6, "lines"), legend.title = element_text(margin = margin(b = 5)), text = element_text(size = 6), legend.margin = margin(0, 0, 0, 0))
 
 
 counts_tcga_og=table(factors_gbmlgg_tcga$WHO_CNS5_2021_Diagnosis)
@@ -849,7 +855,7 @@ pdf("Pub_Classify/Fig1.pdf",height=9,width=6.5)
 plot_grid("",plot1_1,plot1_2,plot1_3,plot1_4,plot1_5, ncol = 1,rel_heights=c(0.1,1,1,1,1,1))
 dev.off()
 
-plots1_1=plot_grid(NULL, figs1a, NULL, labels = c('', 'B', ''), label_size = 10, rel_widths = c(0.1, 1, 0.1),ncol = 3)
+plots1_1=plot_grid(NULL, figs1a, NULL, labels = c('', 'A', ''), label_size = 10, rel_widths = c(0.1, 1, 0.1),ncol = 3)
 plots1_2=plot_grid(figs1b_1, figs1c_1, figs1d_1, labels = c('B', 'C', 'D'), label_size = 10, rel_widths = c(1, 1, 1),ncol = 3)
 plots1_3=plot_grid(figs1b_2, figs1c_2, figs1d_2, labels = c('', '', ''), label_size = 10, rel_widths = c(1, 1, 1),ncol = 3)
 plots1_4=plot_grid(figs1b_3, figs1c_3, figs1d_3, labels = c('', '', ''), label_size = 10, rel_widths = c(1, 1, 1),ncol = 3)
@@ -872,9 +878,10 @@ dev.off()
 plots2_1=plot_grid(figs2a, figs2b, labels = c('A', 'B'), label_size = 10, rel_widths = c(1, 1),ncol = 2)
 plots2_2=plot_grid(figs2c, figs2d, labels = c('C', 'D'), label_size = 10, rel_widths = c(1, 1),ncol = 2)
 plots2_3=plot_grid(figs2e, figs2f, labels = c('E', 'F'), label_size = 10, rel_widths = c(1, 1),ncol = 2)
+plots2_4=plot_grid(NULL, figs2g, NULL, labels = c('', 'G', ''), label_size = 10, rel_widths = c(0.1, 1, 0.1),ncol = 3)
 
-pdf("Pub_Classify/SupFig2.pdf",height=6,width=6.5)
-plot_grid("",plots2_1,plots2_2,plots2_3, ncol = 1,rel_heights=c(0.1*6/9*4/6,1,1,1))
+pdf("Pub_Classify/SupFig2.pdf",height=8,width=6.5)
+plot_grid("",plots2_1,plots2_2,plots2_3,plots2_4, ncol = 1,rel_heights=c(0.1*6/9*4/6,1,1,1,1))
 dev.off()
 
 
