@@ -372,9 +372,9 @@ figs2e=ggplot(temp, aes(x=Dataset, y=Brier_Score, fill=Dataset))+geom_bar(stat =
 temp=data.frame(Dataset=c("TCGA","CGGA","GLASS"),F1=c(confusionMatrix(data=factor(sapply(factors_gbmlgg_tcga[factors_gbmlgg_tcga$Chromosome_1p_19q_Codeletion!="N/A",]$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis, switch,"Astrocytoma_G2"=0,"Astrocytoma_G3"=0,"Astrocytoma_G4"=0,"Glioblastoma_G4"=0,"Oligodendroglioma_G2"=1,"Oligodendroglioma_G3"=1),levels = c(0,1)),reference=factor(sapply(factors_gbmlgg_tcga[factors_gbmlgg_tcga$Chromosome_1p_19q_Codeletion!="N/A",]$Chromosome_1p_19q_Codeletion, switch,"Codeleted"=1,"Non_Codeleted"=0),levels = c(0,1)))$byClass[7], confusionMatrix(data=factor(sapply(factors_gbmlgg_cgga[factors_gbmlgg_cgga$Chromosome_1p_19q_Codeletion!="N/A",]$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis, switch,"Astrocytoma_G2"=0,"Astrocytoma_G3"=0,"Astrocytoma_G4"=0,"Glioblastoma_G4"=0,"Oligodendroglioma_G2"=1,"Oligodendroglioma_G3"=1),levels = c(0,1)),reference=factor(sapply(factors_gbmlgg_cgga[factors_gbmlgg_cgga$Chromosome_1p_19q_Codeletion!="N/A",]$Chromosome_1p_19q_Codeletion, switch,"Codeleted"=1,"Non_Codeleted"=0),levels = c(0,1)))$byClass[7], confusionMatrix(data=factor(sapply(factors_gbmlgg_glass[factors_gbmlgg_glass$Chromosome_1p_19q_Codeletion!="N/A",]$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis, switch,"Astrocytoma_G2"=0,"Astrocytoma_G3"=0,"Astrocytoma_G4"=0,"Glioblastoma_G4"=0,"Oligodendroglioma_G2"=1,"Oligodendroglioma_G3"=1),levels = c(0,1)),reference=factor(sapply(factors_gbmlgg_glass[factors_gbmlgg_glass$Chromosome_1p_19q_Codeletion!="N/A",]$Chromosome_1p_19q_Codeletion, switch,"Codeleted"=1,"Non_Codeleted"=0),levels = c(0,1)))$byClass[7]))
 figs2f=ggplot(temp, aes(x=Dataset, y=F1, fill=Dataset))+geom_bar(stat = "identity")+theme_classic()+scale_fill_manual(values=c(`TCGA`="darkred", `CGGA`="darkgreen", `GLASS`="darkblue"))+xlab("Dataset")+ylab("F1\n(Chromosome 1p/19q-codeletion)")+ labs(fill = "Dataset")+theme(text = element_text(size = 6),legend.key.height = unit(0.5, "lines"),legend.key.width = unit(0.5, "lines"),legend.position = "top",legend.justification = "center",legend.direction = "horizontal")+ scale_y_continuous(breaks=seq(0,1,by=0.1))
 
-
 temp=merge(factors_gbmlgg_tcga,tcga_methylation,by="TCGA_ID",all.x=T)
-figs2g=ggplot(subset(data.frame(table(temp$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis, temp$WHO_CNS5_Diagnosis_Methylation)), Var2 != "N/A"), aes(Var2, Var1, fill = Freq)) + geom_tile(color = "white") + labs(x = "Methylation Diagnosis (Zakharova et al.)", y = "Predicted Diagnosis (Elastic Net)") + scale_fill_gradient(low = "white", high = "dodgerblue4", name = "Count") + scale_x_discrete(labels = c("Astrocytoma_G2" = "A (G2)", "Astrocytoma_G3" = "A (G3)", "Astrocytoma_G4" = "A (G4)", "Glioblastoma_G4" = "GBM (G4)", "Oligodendroglioma_G2" = "O (G2)", "Oligodendroglioma_G3" = "O (G3)")) + scale_y_discrete(labels = c("Astrocytoma_G2" = "A (G2)", "Astrocytoma_G3" = "A (G3)", "Astrocytoma_G4" = "A (G4)", "Glioblastoma_G4" = "GBM (G4)", "Oligodendroglioma_G2" = "O (G2)", "Oligodendroglioma_G3" = "O (G3)")) + theme_minimal() + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + coord_fixed() + geom_text(aes(label = Freq), color = "black", size = 2) + theme(panel.grid.major = element_blank(), panel.border = element_blank(), panel.background = element_blank(), axis.ticks = element_blank(), legend.position = "right", legend.justification = "center", legend.key.width = unit(0.4, "lines"), legend.key.height = unit(0.6, "lines"), legend.title = element_text(margin = margin(b = 5)), text = element_text(size = 6), legend.margin = margin(0, 0, 0, 0))
+temp$Predicted_Lineage = ifelse(grepl("Astrocytoma", temp$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis), "A (G2-4)", ifelse(grepl("Glioblastoma", temp$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis), "GBM (G4)", ifelse(grepl("Oligodendroglioma", temp$Predicted_GLM_ElasticNet_WHO_CNS5_2021_Diagnosis), "O (G2-3)", NA)))
+figs2g=ggplot(subset(data.frame(table(temp$Predicted_Lineage, temp$Methylation_Cluster)), !Var2 %in% c("N/A", "NA", "") & !is.na(Var2)), aes(Var2, Var1, fill = Freq)) + geom_tile(color = "white") + labs(x = "Raw Methylation Cluster (Zakharova et al.)", y = "Predicted Glioma Type (Elastic Net)") + scale_fill_gradient(low = "white", high = "dodgerblue4", name = "Count") + theme_minimal() + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + coord_fixed() + geom_text(aes(label = Freq), color = "black", size = 2) + theme(panel.grid.major = element_blank(), panel.border = element_blank(), panel.background = element_blank(), axis.ticks = element_blank(), legend.position = "right", legend.justification = "center", legend.key.width = unit(0.4, "lines"), legend.key.height = unit(0.6, "lines"), legend.title = element_text(margin = margin(b = 5)), text = element_text(size = 6), legend.margin = margin(0, 0, 0, 0))
 
 
 counts_tcga_og=table(factors_gbmlgg_tcga$WHO_CNS5_2021_Diagnosis)
@@ -776,6 +776,32 @@ enrich_gbmlgg_OligoIII$P.value=round(log10(enrich_gbmlgg_OligoIII$Adjusted.P.val
 enrich_gbmlgg_OligoIII$Term=str_wrap(enrich_gbmlgg_OligoIII$Term, width = 40)
 fig4f=plotEnrich(enrich_gbmlgg_OligoIII, showTerms = 14, numChar = 100,xlab="Enriched Terms",ylab="Gene Count",orderBy = "P.value")+theme_classic()+ facet_grid(.~Sign)+scale_fill_continuous(high="dodgerblue4",low="dodgerblue1",labels = scales::label_number(accuracy = 1))+ theme(text = element_text(size = 6),axis.text.y = element_text(size = 5.5,lineheight = 0.8), plot.title = element_blank(),legend.position = "bottom",legend.justification = "left",legend.key.width  = unit(0.75, "lines"),legend.key.height = unit(0.4, "lines"),legend.margin=margin(c(0,0,0,0)))+ guides(fill=guide_colourbar(title="Log10 Adjusted\np-value"))
 
+temp=rbind(enrich_gbmlgg_AstroII_up[[1]],enrich_gbmlgg_AstroII_down[[1]],enrich_gbmlgg_AstroIII_up[[1]],enrich_gbmlgg_AstroIII_down[[1]],enrich_gbmlgg_AstroIV_up[[1]],enrich_gbmlgg_AstroIV_down[[1]],enrich_gbmlgg_GBMIV_up[[1]],enrich_gbmlgg_GBMIV_down[[1]],enrich_gbmlgg_OligoII_up[[1]],enrich_gbmlgg_OligoII_down[[1]],enrich_gbmlgg_OligoIII_up[[1]],enrich_gbmlgg_OligoIII_down[[1]])
+genes_cholesterol=unique(unlist(strsplit(temp[temp$Term %in% "Cholesterol Biosynthetic Process (GO:0006695)", ]$Genes, ";")))
+genes_potassium=unique(unlist(strsplit(temp[temp$Term %in% "Potassium Ion Transport (GO:0006813)", ]$Genes, ";")))
+gene_labels_chol=gene_labels[gene_labels$HGNC_Symbol%in%genes_cholesterol,]
+gene_labels_pot=gene_labels[gene_labels$HGNC_Symbol%in%genes_potassium,]
+gene_ensembl=c(gene_labels_chol$Ensembl_Gene_ID, gene_labels_pot$Ensembl_Gene_ID)
+gene_hgnc=c(gene_labels_chol$HGNC_Symbol, gene_labels_pot$HGNC_Symbol)
+gene_pathway=factor(c(rep("Cholesterol\nBiosynthetic\nProcess", length(genes_cholesterol)), rep("Potassium Ion\nTransport", length(genes_potassium))), levels=c("Cholesterol\nBiosynthetic\nProcess", "Potassium Ion\nTransport"))
+temp=data.frame(data.frame(Pred_TCGA_GBMIV=res_gene_tcga_gbmlgg_pred_GBMIV$t_Statistic,Pred_CGGA_GBMIV=res_gene_cgga_gbmlgg_pred_GBMIV$t_Statistic,Pred_GLASS_GBMIV=res_gene_glass_gbmlgg_pred_GBMIV$t_Statistic,Pred_TCGA_AstroII=res_gene_tcga_gbmlgg_pred_AstroII$t_Statistic,Pred_CGGA_AstroII=res_gene_cgga_gbmlgg_pred_AstroII$t_Statistic,Pred_GLASS_AstroII=res_gene_glass_gbmlgg_pred_AstroII$t_Statistic,Pred_TCGA_AstroIII=res_gene_tcga_gbmlgg_pred_AstroIII$t_Statistic,Pred_CGGA_AstroIII=res_gene_cgga_gbmlgg_pred_AstroIII$t_Statistic,Pred_GLASS_AstroIII=res_gene_glass_gbmlgg_pred_AstroIII$t_Statistic,Pred_TCGA_AstroIV=res_gene_tcga_gbmlgg_pred_AstroIV$t_Statistic,Pred_CGGA_AstroIV=res_gene_cgga_gbmlgg_pred_AstroIV$t_Statistic,Pred_GLASS_AstroIV=res_gene_glass_gbmlgg_pred_AstroIV$t_Statistic,Pred_TCGA_OligoII=res_gene_tcga_gbmlgg_pred_OligoII$t_Statistic,Pred_CGGA_OligoII=res_gene_cgga_gbmlgg_pred_OligoII$t_Statistic,Pred_GLASS_OligoII=res_gene_glass_gbmlgg_pred_OligoII$t_Statistic,Pred_TCGA_OligoIII=res_gene_tcga_gbmlgg_pred_OligoIII$t_Statistic,Pred_CGGA_OligoIII=res_gene_cgga_gbmlgg_pred_OligoIII$t_Statistic,Pred_GLASS_OligoIII=res_gene_glass_gbmlgg_pred_OligoIII$t_Statistic))
+rownames(temp)=rownames(res_gene_tcga_gbmlgg_pred_AstroII)
+subtemp=scale(temp)[gene_ensembl,]
+rownames(subtemp)=gene_hgnc
+row_ha = rowAnnotation(
+  `Glioma Type`=as.character(c(rep("GBM (G4)",3),rep("A (G2)",3),rep("A (G3)",3),rep("A (G4)",3),rep("O (G2)",3),rep("O (G3)",3))),
+  `Dataset`=as.character(rep(c("TCGA","CGGA","GLASS"),6)),
+  col = list(`Glioma Type` = c(`A (G2)`="yellow2", `A (G3)`="orange2", `A (G4)`="firebrick2", `GBM (G4)`="purple2", `O (G2)`="lightblue2", `O (G3)`="dodgerblue2"),`Dataset` = c(`TCGA`="darkred", `CGGA`="darkgreen", `GLASS`="darkblue")),
+  annotation_legend_param = list(`Glioma Type` = list(title_gp = gpar(fontsize = 6), labels_gp = gpar(fontsize = 5)),`Dataset` = list(title_gp = gpar(fontsize = 6), labels_gp = gpar(fontsize = 5))),
+  annotation_name_gp = gpar(fontsize = 6)
+)
+col_ha = HeatmapAnnotation(
+  Pathway = gene_pathway,
+  col = list(Pathway = c(`Cholesterol\nBiosynthetic\nProcess` = "darkgreen", `Potassium Ion\nTransport` = "purple4")),
+  show_annotation_name = FALSE,
+  show_legend = FALSE
+)
+figs4g=ggplotify::as.grob(Heatmap(t(subtemp),show_row_names=F,show_column_names = T,left_annotation=packLegend(row_ha),top_annotation=col_ha,name="Scaled\nModerated\nt-Statistic",heatmap_legend_param = list(title_gp = gpar(fontsize = 6),labels_gp = gpar(fontsize = 5),legend_height = unit(2, "cm")),cluster_rows = F,cluster_columns = TRUE,column_split = gene_pathway,column_gap = unit(2, "mm"),column_title_gp = gpar(fontsize = 6),column_names_gp = gpar(fontsize = 4),rect_gp = gpar(col = "white", lwd = 0.5)))
 
 enrich_gbmlgg_AstroII=data.frame(head(enrich_gbmlgg_AstroII_up[[2]][order(enrich_gbmlgg_AstroII_up[[2]]$P.value),] %>% .[grepl("Human",.$Term) & grepl("Cortex|Brain",.$Term),],7),Sign="Upregulated")
 enrich_gbmlgg_AstroII$Term=sub('(.*)\\s\\(.*', '\\1',enrich_gbmlgg_AstroII$Term)
@@ -911,9 +937,10 @@ dev.off()
 plots4_1=plot_grid(figs4a, figs4b, labels = c('A', 'B'), label_size = 10, rel_widths = c(1, 1),ncol = 2)
 plots4_2=plot_grid(figs4c, figs4d, labels = c('C', 'D'), label_size = 10, rel_widths = c(1, 1),ncol = 2)
 plots4_3=plot_grid(figs4e, figs4f, labels = c('E', 'F'), label_size = 10, rel_widths = c(1, 1),ncol = 2)
+plots4_4=plot_grid(figs4g, labels = c('G'), label_size = 10, rel_widths = c(1),ncol = 1)
 
-pdf("Pub_Classify/SupFig4.pdf",height=6,width=6.5)
-plot_grid("",plots4_1,plots4_2,plots4_3, ncol = 1,rel_heights=c(0.1*6/9*4/6,1,1,1))
+pdf("Pub_Classify/SupFig4.pdf",height=9.5,width=6.5)
+plot_grid("",plots4_1,plots4_2,plots4_3, plots4_4, ncol = 1,rel_heights=c(0.1*6/9*4/6,1,1,1,2))
 dev.off()
 
 
