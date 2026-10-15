@@ -788,7 +788,7 @@ gene_hgnc=c(gene_labels_chol$HGNC_Symbol, gene_labels_pot$HGNC_Symbol)
 gene_pathway=factor(c(rep("Cholesterol\nBiosynthetic\nProcess", length(genes_cholesterol)), rep("Potassium Ion\nTransport", length(genes_potassium))), levels=c("Cholesterol\nBiosynthetic\nProcess", "Potassium Ion\nTransport"))
 temp2=data.frame(data.frame(Pred_TCGA_GBMIV=res_gene_tcga_gbmlgg_pred_GBMIV$t_Statistic,Pred_CGGA_GBMIV=res_gene_cgga_gbmlgg_pred_GBMIV$t_Statistic,Pred_GLASS_GBMIV=res_gene_glass_gbmlgg_pred_GBMIV$t_Statistic,Pred_TCGA_AstroII=res_gene_tcga_gbmlgg_pred_AstroII$t_Statistic,Pred_CGGA_AstroII=res_gene_cgga_gbmlgg_pred_AstroII$t_Statistic,Pred_GLASS_AstroII=res_gene_glass_gbmlgg_pred_AstroII$t_Statistic,Pred_TCGA_AstroIII=res_gene_tcga_gbmlgg_pred_AstroIII$t_Statistic,Pred_CGGA_AstroIII=res_gene_cgga_gbmlgg_pred_AstroIII$t_Statistic,Pred_GLASS_AstroIII=res_gene_glass_gbmlgg_pred_AstroIII$t_Statistic,Pred_TCGA_AstroIV=res_gene_tcga_gbmlgg_pred_AstroIV$t_Statistic,Pred_CGGA_AstroIV=res_gene_cgga_gbmlgg_pred_AstroIV$t_Statistic,Pred_GLASS_AstroIV=res_gene_glass_gbmlgg_pred_AstroIV$t_Statistic,Pred_TCGA_OligoII=res_gene_tcga_gbmlgg_pred_OligoII$t_Statistic,Pred_CGGA_OligoII=res_gene_cgga_gbmlgg_pred_OligoII$t_Statistic,Pred_GLASS_OligoII=res_gene_glass_gbmlgg_pred_OligoII$t_Statistic,Pred_TCGA_OligoIII=res_gene_tcga_gbmlgg_pred_OligoIII$t_Statistic,Pred_CGGA_OligoIII=res_gene_cgga_gbmlgg_pred_OligoIII$t_Statistic,Pred_GLASS_OligoIII=res_gene_glass_gbmlgg_pred_OligoIII$t_Statistic))
 rownames(temp2)=rownames(res_gene_tcga_gbmlgg_pred_AstroII)
-subtemp2=scale(temp2)[gene_ensembl,]
+subtemp2=t(scale(t(temp2)))[gene_ensembl,]
 rownames(subtemp2)=gene_hgnc
 row_ha = rowAnnotation(
   `Glioma Type`=as.character(c(rep("GBM (G4)",3),rep("A (G2)",3),rep("A (G3)",3),rep("A (G4)",3),rep("O (G2)",3),rep("O (G3)",3))),
@@ -807,17 +807,12 @@ figs4g=ggplotify::as.grob(Heatmap(t(subtemp2),show_row_names=F,show_column_names
 
 temp = rbind(head(enrich_gbmlgg_AstroII_up[[1]][order(enrich_gbmlgg_AstroII_up[[1]]$P.value), ], 7), head(enrich_gbmlgg_AstroII_down[[1]][order(enrich_gbmlgg_AstroII_down[[1]]$P.value), ], 7), head(enrich_gbmlgg_AstroIII_up[[1]][order(enrich_gbmlgg_AstroIII_up[[1]]$P.value), ], 7), head(enrich_gbmlgg_AstroIII_down[[1]][order(enrich_gbmlgg_AstroIII_down[[1]]$P.value), ], 7), head(enrich_gbmlgg_AstroIV_up[[1]][order(enrich_gbmlgg_AstroIV_up[[1]]$P.value), ], 7), head(enrich_gbmlgg_AstroIV_down[[1]][order(enrich_gbmlgg_AstroIV_down[[1]]$P.value), ], 7), head(enrich_gbmlgg_GBMIV_up[[1]][order(enrich_gbmlgg_GBMIV_up[[1]]$P.value), ], 7), head(enrich_gbmlgg_GBMIV_down[[1]][order(enrich_gbmlgg_GBMIV_down[[1]]$P.value), ], 7), head(enrich_gbmlgg_OligoII_up[[1]][order(enrich_gbmlgg_OligoII_up[[1]]$P.value), ], 7), head(enrich_gbmlgg_OligoII_down[[1]][order(enrich_gbmlgg_OligoII_down[[1]]$P.value), ], 7), head(enrich_gbmlgg_OligoIII_up[[1]][order(enrich_gbmlgg_OligoIII_up[[1]]$P.value), ], 7), head(enrich_gbmlgg_OligoIII_down[[1]][order(enrich_gbmlgg_OligoIII_down[[1]]$P.value), ], 7) )
 unique_pathways = trimws(sub("\\s*\\(GO:.*\\)", "", sort(unique(temp$Term))))
-mat_t = t(scale(temp2))
+mat_t = scale(t(temp2))
 pathway_scores_list = lapply(sort(unique(temp$Term)), function(pw) {
   pw_rows = temp[temp$Term == pw, ]
   gene_symbols = unique(unlist(strsplit(pw_rows$Genes, ";")))
   ensembl_ids = gene_labels[gene_labels$HGNC_Symbol %in% gene_symbols, "Ensembl_Gene_ID"]
-  valid_genes = intersect(ensembl_ids, colnames(mat_t))
-  if(length(valid_genes) > 0) {
-    rowMeans(mat_t[, valid_genes, drop = FALSE], na.rm = TRUE)
-  } else {
-    rep(NA, nrow(mat_t))
-  }
+  rowMeans(mat_t[, ensembl_ids, drop = FALSE], na.rm = TRUE)
 })
 pathway_score_mat = do.call(cbind, pathway_scores_list)
 colnames(pathway_score_mat) = unique_pathways
